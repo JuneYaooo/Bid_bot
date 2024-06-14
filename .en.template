@@ -1,0 +1,15 @@
+# OCR 开关
+OCR_ENABLED=False
+
+# LLM 类型 (gpt 或 kimi)
+LLM_TYPE=gpt
+
+# OpenAI API 配置
+OPENAI_MODEL_NAME="gpt-4o"
+OPENAI_API_KEY=your-api-key
+OPENAI_BASE_URL=your-url
+
+# Moonshot API 配置
+MOONSHOT_MODEL_NAME="moonshot-v1-32k"
+MOONSHOT_API_KEY=your-api-key
+MOONSHOT_BASE_URL=your-url

@@ -1,0 +1,11 @@
+openai
+numpy
+scikit-learn
+requests
+markdown
+beautifulsoup4
+reportlab
+python-dotenv
+Pillow
+PyMuPDF
+retrying
