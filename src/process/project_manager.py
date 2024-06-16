@@ -59,24 +59,6 @@ class ProjectManager:
             
             return project_path
 
-    def _get_file_hash(self, file_path):
-        hasher = hashlib.md5()
-        with open(file_path, 'rb') as f:
-            buf = f.read()
-            hasher.update(buf)
-        return hasher.hexdigest()
-
-    def _load_parsed_data(self, file_hash):
-        parsed_file_path = os.path.join(self.project_dir, 'parsed_files', f"{file_hash}.json")
-        if os.path.exists(parsed_file_path):
-            with open(parsed_file_path, 'r') as f:
-                return json.load(f)
-        return None
-
-    def _save_parsed_data(self, file_hash, data):
-        parsed_file_path = os.path.join(self.project_dir, 'parsed_files', f"{file_hash}.json")
-        with open(parsed_file_path, 'w') as f:
-            json.dump(data, f)
 
     def parse_document(self, file_path, file_name,project_name, document_type, update=False, ocr_enabled=False):
 
@@ -87,9 +69,6 @@ class ProjectManager:
         os.makedirs(os.path.join(document_store_dir, 'raw'), exist_ok=True)
         os.makedirs(os.path.join(document_store_dir, 'parsed_files'), exist_ok=True)
         os.makedirs(os.path.join(document_store_dir, 'reports'), exist_ok=True)
-        # if parsed_data and not update:
-        #     print("Using previously parsed data.")
-        #     return parsed_data
 
         # 将文件复制到项目的raw文件夹中
         shutil.copy(file_path, os.path.join(document_store_dir, 'raw', file_name))
@@ -103,7 +82,6 @@ class ProjectManager:
         self.update_project_config(project_path, f"parsed_files.{document_type}.txt_finished", True)
         
         if ocr_enabled == True:
-            print('ocr_enabled~~',ocr_enabled)
             ocr_results = ocr_images(output_dir=os.path.join(document_store_dir, 'parsed_files'))
             save_results(ocr_results_file = os.path.join(project_path, 'parsed_files','ocr_results.json'), text_file=os.path.join(document_store_dir, 'parsed_files','pdf_text.json'))
             self.update_project_config(project_path, f"parsed_files.{document_type}.ocr_results_path", os.path.join(document_store_dir, 'parsed_files','ocr_results.json'))
