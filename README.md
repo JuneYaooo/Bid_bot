@@ -69,7 +69,7 @@ Bid_bot 是一个允许用户输入投标文件的路径和招标文件的路径
 
     `.env` 文件中的配置项说明：
     - `OCR_ENABLED`: 是否启用OCR（光学字符识别）功能，`True` 或 `False`。
-    - `SUMMARY_ENABLED`: 是否启用模型检索后总结能力（如果出于隐私考虑，不想让模型读取自己的投标文件，可以不启用这个，不启用的状态下，只包含宅表要求检索能力），`True` 或 `False`。
+    - `SUMMARY_ENABLED`: 是否启用模型检索后总结能力（如果出于隐私考虑，不想让模型读取自己的投标文件，可以不启用这个，不启用的状态下，只包含招标要求对投标文件的检索能力），`True` 或 `False`。
     - `LLM_TYPE`: 使用的语言模型类型，可以是 `gpt` 或 `kimi`。
     - `OPENAI_MODEL_NAME`: OpenAI 模型名称，例如 `gpt-4o`。
     - `OPENAI_API_KEY`: 你的 OpenAI API 密钥。
