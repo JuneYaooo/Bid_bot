@@ -41,7 +41,6 @@ class GPTClient(BaseClient):
             )
 
         ocr_result = response.choices[0].message.content
-        ocr_result = response['choices'][0]['message']['content']
         return ocr_result
     
     def get_embedding(self, text):

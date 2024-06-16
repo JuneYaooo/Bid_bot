@@ -1,6 +1,7 @@
 import os
 import json
 import hashlib
+import shutil
 from src.process.file_utils import process_pdf, ocr_images, save_results
 from src.embeddings.embedding_utils import process_embedding_json
 
@@ -13,53 +14,50 @@ class ProjectManager:
     def create_project(self, project_name):
         project_path = os.path.join(self.project_dir, project_name)
         config_path = os.path.join(project_path, 'config.json')
+        os.makedirs(project_path, exist_ok=True)
 
-        if os.path.exists(project_path):
-            print(f"Project '{project_name}' already exists. Loading existing configuration.")
+        if os.path.exists(config_path):
+            print(f"Project '{config_path}' already exists. Loading existing configuration.")
             with open(config_path, 'r', encoding='utf-8') as f:
                 self.config = json.load(f)
             return project_path
-
-        os.makedirs(os.path.join(project_path, 'raw'), exist_ok=True)
-        os.makedirs(os.path.join(project_path, 'parsed'), exist_ok=True)
-        os.makedirs(os.path.join(project_path, 'reports'), exist_ok=True)
-        
-        self.config = {
-            "project_name": project_name,
-            "raw_files": {
-                "toubiao_file_path": "",
-                "zhaobiao_file_path": ""
-            },
-            "parsed_files": {
-                "toubiao_file": {
-                    "pdf_extract_path": "",
-                    "ocr_images_path": "",
-                    "ocr_results_path": "",
-                    "image_index_path": "",
-                    "ocr_pdf_extract_path": "",
-                    "embedding_file_path": "",
-                    "report_path" :"", 
-                    "txt_finished": False,
-                    "ocr_finished": False
+        else:
+            self.config = {
+                "project_name": project_name,
+                "raw_files": {
+                    "toubiao_file_path": "",
+                    "zhaobiao_file_path": ""
                 },
-                "zhaobiao_file": {
-                    "pdf_extract_path": "",
-                    "ocr_images_path": "",
-                    "ocr_results_path": "",
-                    "image_index_path": "",
-                    "ocr_pdf_extract_path": "",
-                    "embedding_file_path": "",
-                    "txt_finished": False,
-                    "ocr_finished": False
-                }
-            },
-            "reports": ""
-        }
+                "parsed_files": {
+                    "toubiao_file": {
+                        "pdf_extract_path": "",
+                        "ocr_images_path": "",
+                        "ocr_results_path": "",
+                        "image_index_path": "",
+                        "ocr_pdf_extract_path": "",
+                        "embedding_file_path": "",
+                        "report_path" :"", 
+                        "txt_finished": False,
+                        "ocr_finished": False
+                    },
+                    "zhaobiao_file": {
+                        "pdf_extract_path": "",
+                        "ocr_images_path": "",
+                        "ocr_results_path": "",
+                        "image_index_path": "",
+                        "ocr_pdf_extract_path": "",
+                        "embedding_file_path": "",
+                        "txt_finished": False,
+                        "ocr_finished": False
+                    }
+                },
+                "reports": ""
+            }
 
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(self.config, f, ensure_ascii=False, indent=4)
-        
-        return project_path
+            with open(config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, ensure_ascii=False, indent=4)
+            
+            return project_path
 
     def _get_file_hash(self, file_path):
         hasher = hashlib.md5()
@@ -80,41 +78,44 @@ class ProjectManager:
         with open(parsed_file_path, 'w') as f:
             json.dump(data, f)
 
-    def parse_document(self, file_path, project_name, document_type, update=False, ocr_enabled=False):
-        file_hash = self._get_file_hash(file_path)
-        parsed_data = self._load_parsed_data(file_hash)
+    def parse_document(self, file_path, file_name,project_name, document_type, update=False, ocr_enabled=False):
+
+
         project_path = os.path.join(self.project_dir, project_name)
+        document_store_dir = os.path.join(project_path, document_type)
        
-        if parsed_data and not update:
-            print("Using previously parsed data.")
-            return parsed_data
+        os.makedirs(os.path.join(document_store_dir, 'raw'), exist_ok=True)
+        os.makedirs(os.path.join(document_store_dir, 'parsed_files'), exist_ok=True)
+        os.makedirs(os.path.join(document_store_dir, 'reports'), exist_ok=True)
+        # if parsed_data and not update:
+        #     print("Using previously parsed data.")
+        #     return parsed_data
+
+        # 将文件复制到项目的raw文件夹中
+        shutil.copy(file_path, os.path.join(document_store_dir, 'raw', file_name))
+        print(f"Copied {file_name} to project directory.")
 
         print("Parsing document...")
-        embedding_file_path = os.path.join(self.project_dir, project_name,document_type+'.pkl')
+        embedding_file_path = os.path.join(document_store_dir,document_type+'.pkl')
         print('embedding_file_path',embedding_file_path)
-        ocr_candidates, pdf_text = process_pdf(file_path,output_dir=os.path.join(project_path, 'parsed_files'))
-        self.update_project_config(project_path, f"parsed_files.{document_type}.pdf_extract_path", os.path.join(project_path, 'parsed_files','pdf_text.json'))
+        ocr_candidates, pdf_text = process_pdf(file_path,output_dir=os.path.join(document_store_dir, 'parsed_files'))
+        self.update_project_config(project_path, f"parsed_files.{document_type}.pdf_extract_path", os.path.join(document_store_dir, 'parsed_files','pdf_text.json'))
         self.update_project_config(project_path, f"parsed_files.{document_type}.txt_finished", True)
         
-        if ocr_enabled:
+        if ocr_enabled == True:
             print('ocr_enabled~~',ocr_enabled)
-            ocr_results = ocr_images(ocr_candidates,output_dir=os.path.join(project_path, 'parsed_files'))
-            save_results(ocr_results_file = os.path.join(project_path, 'parsed_files','ocr_results.json'), text_file=os.path.join(project_path, 'parsed_files','pdf_text.json'))
-            self.update_project_config(project_path, f"parsed_files.{document_type}.ocr_results_path", os.path.join(project_path, 'parsed_files','ocr_results.json'))
-            self.update_project_config(project_path, f"parsed_files.{document_type}.ocr_pdf_extract_path", os.path.join(project_path, 'parsed_files','ocr_pdf_document.json'))
+            ocr_results = ocr_images(output_dir=os.path.join(document_store_dir, 'parsed_files'))
+            save_results(ocr_results_file = os.path.join(project_path, 'parsed_files','ocr_results.json'), text_file=os.path.join(document_store_dir, 'parsed_files','pdf_text.json'))
+            self.update_project_config(project_path, f"parsed_files.{document_type}.ocr_results_path", os.path.join(document_store_dir, 'parsed_files','ocr_results.json'))
+            self.update_project_config(project_path, f"parsed_files.{document_type}.ocr_pdf_extract_path", os.path.join(document_store_dir, 'parsed_files','ocr_pdf_document.json'))
             self.update_project_config(project_path, f"parsed_files.{document_type}.ocr_finished", True)
-            process_embedding_json(os.path.join(project_path, 'parsed_files','ocr_pdf_document.json'), embedding_file_path)
+            process_embedding_json(os.path.join(document_store_dir, 'parsed_files','ocr_pdf_document.json'), embedding_file_path)
         else:
             ocr_results = []
-            process_embedding_json(os.path.join(project_path, 'parsed_files','ocr_pdf_document.json'), embedding_file_path)
+            process_embedding_json(os.path.join(document_store_dir, 'parsed_files','pdf_text.json'), embedding_file_path)
 
-        # parsed_data = {
-        #     'pdf_text': pdf_text,
-        #     'ocr_results': ocr_results
-        # }
-
-        # self._save_parsed_data(file_hash, parsed_data)
-        return parsed_data
+        self.update_project_config(project_path, f"parsed_files.{document_type}.embedding_file_path", embedding_file_path)
+        return 
 
     def update_project_config(self, project_path, key, value):
         config_path = os.path.join(project_path, 'config.json')

@@ -6,7 +6,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.llms.gpt_client import GPTClient
 import pickle
 import json 
-import os
 
 # Define a custom wait strategy for retrying
 def wait_exponential_multiplier():
@@ -22,7 +21,7 @@ def retry_on_any_exception(exception):
     return True  # Always retry on any exception
 
 @retry(stop_max_attempt_number=10, wait_exponential_multiplier=wait_exponential_multiplier(), wait_exponential_max=wait_exponential_max(), retry_on_exception=retry_on_any_exception)
-def get_embedding(text, model="text-embedding-ada-002"):
+def get_embedding(text, model="text-embedding-3-small"):
     embedding_client = GPTClient(model=model)
     if not text.strip():  # Ensure text is not empty or just whitespace
         raise ValueError("The text to be embedded is empty.")
@@ -120,9 +119,9 @@ def load_embeddings(file_path):
 # sentence_embeddings = load_embeddings('embeddings.pkl')
 
 def find_similar_paragraphs(query_sentence,embedding_path,top_n=5, threshold=0.6):
-    print('prestart find_similar_paragraphs!2',query_sentence)
+    print('prestart find_similar_paragraphs!',query_sentence)
     embeddings=load_embeddings(embedding_path)
-    print('start find_similar_paragraphs!2')
+    print('start find_similar_paragraphs!')
     query_embedding = get_embedding(query_sentence)
     similarities = []
 

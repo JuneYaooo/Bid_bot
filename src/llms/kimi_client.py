@@ -1,6 +1,5 @@
 from src.llms.base import BaseClient
 import os
-import requests
 from openai import OpenAI
 
 class KimiClient(BaseClient):

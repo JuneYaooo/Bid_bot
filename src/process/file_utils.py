@@ -4,7 +4,6 @@ import io
 import os
 import json
 import base64
-from openai import OpenAI
 from src.llms.gpt_client import GPTClient
 from src.prompts.base_prompt import *
 import re
@@ -13,7 +12,7 @@ def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
-def resize_image(image, max_size=150):
+def resize_image(image, max_size=200):
     width, height = image.size
     if width > height:
         if width > max_size:
@@ -62,7 +61,7 @@ def process_pdf(file_path, output_dir=".", index_file="image_index.json", text_f
             })
             
             # 保存图像到文件
-            image_path = os.path.join(output_dir, f"page_{page_num + 1}_img_{img_index + 1}.png")
+            image_path = os.path.join(output_dir, 'ocr_images', f"page_{page_num + 1}_img_{img_index + 1}.png")
             image.save(image_path)
         pdf_text.append({"page_num": page_num + 1, "text": text})
     # 保存图片信息存储索引文件
@@ -79,7 +78,6 @@ def ocr_images(index_file="image_index.json", ocr_results_file="ocr_results.json
     # 创建保存OCR结果的目录
     os.makedirs(os.path.join(output_dir, 'ocr_results'), exist_ok=True)
     
-    print('output_dir==',output_dir)
     with open(os.path.join(output_dir, index_file), "r", encoding='utf-8') as json_file:
         ocr_candidates = json.load(json_file)
     
@@ -105,7 +103,7 @@ def ocr_images(index_file="image_index.json", ocr_results_file="ocr_results.json
         # 加载图像并调整大小
         image = Image.open(image_path)
         image = resize_image(image)
-        resized_image_path = os.path.join(output_dir, f"resized_page_{page_num}_img_{img_index}.png")
+        resized_image_path = os.path.join(output_dir, "ocr_results", f"resized_page_{page_num}_img_{img_index}.png")
         image.save(resized_image_path)
 
         # 编码图像为base64
@@ -133,7 +131,7 @@ def ocr_images(index_file="image_index.json", ocr_results_file="ocr_results.json
 
 def save_results(ocr_results_file = "ocr_results.json", text_file="pdf_text.json", output_dir="."):
     # 创建保存最终结果的目录
-    os.makedirs(os.path.join(output_dir, "pdf_withocr"), exist_ok=True)
+    os.makedirs(os.path.join(output_dir), exist_ok=True)
 
     # 读取PDF文本
     with open(text_file, "r", encoding='utf-8') as json_file:
@@ -153,7 +151,7 @@ def save_results(ocr_results_file = "ocr_results.json", text_file="pdf_text.json
         item['full_text'] = text
         ocr_text.append(text)
 
-    with open(os.path.join(output_dir, "pdf_withocr", "ocr_pdf_document.json"), "w", encoding='utf-8') as json_file:
+    with open(os.path.join(output_dir, "ocr_pdf_document.json"), "w", encoding='utf-8') as json_file:
         json.dump(pdf_text, json_file, ensure_ascii=False, indent=4)
 
 
