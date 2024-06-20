@@ -51,13 +51,28 @@ def main():
     
     
     # 使用LLM进行招标要求提取
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": extract_requirements_prompt + tender_document_text}
-    ]
-    tender_requirements = llm_client.get_completion(messages)
-    print("Extracted requirements from tender document.")
-    parsed_json_tender_requirements = extract_list_from_text(tender_requirements)
+    parsed_json_tender_requirements = None
+    max_attempts = 3
+
+    for attempt in range(max_attempts):
+        messages = [
+            {"role": "system", "content": "You are a Bid and Tender Specialist."},
+            {"role": "user", "content": extract_requirements_prompt + tender_document_text}
+        ]
+        tender_requirements = llm_client.get_completion(messages)
+        print(f"Attempt {attempt + 1}: Extracted requirements from tender document.")
+        
+        parsed_json_tender_requirements = extract_list_from_text(tender_requirements)
+        
+        if parsed_json_tender_requirements is not None:
+            break
+        
+        print(f"Attempt {attempt + 1} failed. Retrying...")
+
+    if parsed_json_tender_requirements is None:
+        print("Failed to extract requirements after 3 attempts.")
+    else:
+        print("Successfully extracted requirements.")
     
     
     if os.getenv('SUMMARY_ENABLED') == 'True' or os.getenv('SUMMARY_ENABLED'):
